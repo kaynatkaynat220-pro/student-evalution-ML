@@ -1,73 +1,120 @@
-## back end
-import os
+import streamlit as st
 import numpy as np
 import pickle
-
-from flask import Flask, render_template, request
-
-# 🔥 matplotlib imports
 import matplotlib.pyplot as plt
-import io
-import base64
 
-app = Flask(__name__)
+# -----------------------------
+# Page Configuration
+# -----------------------------
+st.set_page_config(
+    page_title="Student Performance Evaluation",
+    page_icon="🎓",
+    layout="wide"
+)
 
-print("Current Folder:", os.getcwd())
-print("Templates Folder Exists:", os.path.exists("templates"))
-
-# Load model + scaler
+# -----------------------------
+# Load Model
+# -----------------------------
 model = pickle.load(open("model/model.pkl", "rb"))
 scaler = pickle.load(open("model/scaler.pkl", "rb"))
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# -----------------------------
+# Title
+# -----------------------------
+st.title("🎓 Student Performance Evaluation System")
 
-@app.route("/predict")
-def predict_page():
-    return render_template("predict.html")
+st.write(
+    """
+This application predicts a student's final performance based on:
 
-@app.route("/result", methods=["POST"])
-def result():
+- Study Time
+- Number of Failures
+- Absences
 
-    # ---------------- INPUT ----------------
-    studytime = int(request.form["studytime"])
-    failures = int(request.form["failures"])
-    absences = int(request.form["absences"])
+The prediction is performed using a Machine Learning model.
+"""
+)
+
+st.divider()
+
+# -----------------------------
+# Sidebar
+# -----------------------------
+st.sidebar.header("Enter Student Details")
+
+studytime = st.sidebar.slider(
+    "Study Time (1-4)",
+    min_value=1,
+    max_value=4,
+    value=2
+)
+
+failures = st.sidebar.slider(
+    "Previous Failures",
+    min_value=0,
+    max_value=4,
+    value=0
+)
+
+absences = st.sidebar.slider(
+    "Absences",
+    min_value=0,
+    max_value=100,
+    value=5
+)
+
+# -----------------------------
+# Prediction
+# -----------------------------
+if st.sidebar.button("Predict Performance"):
 
     input_data = np.array([[studytime, failures, absences]])
+
     input_scaled = scaler.transform(input_data)
 
     prediction = model.predict(input_scaled)[0]
 
-    # ---------------- PASS / FAIL ----------------
     if prediction >= 10:
         status = "PASS 🎉"
+        st.success(f"Predicted Grade: {prediction:.2f}")
+        st.success(status)
     else:
         status = "FAIL ❌"
+        st.error(f"Predicted Grade: {prediction:.2f}")
+        st.error(status)
 
-    # ---------------- GRAPH ----------------
-    fig, ax = plt.subplots()
+    st.subheader("Student Input Analysis")
+
+    fig, ax = plt.subplots(figsize=(6,4))
 
     features = ["Study Time", "Failures", "Absences"]
     values = [studytime, failures, absences]
 
-    ax.bar(features, values, color=["green", "red", "orange"])
-    ax.set_title("Student Input Analysis")
+    colors = ["green", "red", "orange"]
 
-    img = io.BytesIO()
-    plt.savefig(img, format="png")
-    img.seek(0)
+    ax.bar(features, values, color=colors)
+    ax.set_ylabel("Value")
+    ax.set_title("Student Performance Factors")
 
-    graph_url = base64.b64encode(img.getvalue()).decode()
+    st.pyplot(fig)
 
-    # ---------------- RETURN ----------------
-    return render_template(
-        "result.html",
-        prediction=round(prediction, 2),
-        status=status,
-        graph=graph_url
-    )
+st.divider()
 
-if __name__ == "__main__":
-    app.run(debug=True)
+st.markdown(
+"""
+### Project Information
+
+**Machine Learning Algorithm:** Random Forest Regression
+
+**Input Features**
+
+- Study Time
+- Failures
+- Absences
+
+**Output**
+
+- Predicted Final Grade (G3)
+- PASS / FAIL Status
+"""
+)
