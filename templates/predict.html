@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Form</title>
+
+    <!-- CSS link (IMPORTANT) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Student Performance Prediction</h1>
+
+    <form action="/result" method="POST">
+
+        <label>Study Time:</label>
+        <input type="number" name="studytime" required>
+
+        <label>Failures:</label>
+        <input type="number" name="failures" required>
+
+        <label>Absences:</label>
+        <input type="number" name="absences" required>
+
+        <button type="submit">Predict</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
